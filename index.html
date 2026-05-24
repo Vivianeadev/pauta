@@ -551,7 +551,7 @@
   </footer>
 
   <script>
-    // Funções auxiliares (mantidas)
+    // Funções auxiliares
     function slugify(text) {
       return String(text || "")
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -572,7 +572,6 @@
 
     // Função principal que monta toda a interface a partir dos artigos
     function buildInterface(all) {
-      // Preparar URLs
       all.forEach(a => {
         if (!a.url) a.url = '/artigo/' + slugify(a.eixo) + '/' + slugify(a.tema) + '/' + slugify(a.slug) + '.html';
       });
@@ -754,8 +753,6 @@
       const searchResults = document.getElementById('searchResults');
       const q = this.value.toLowerCase().trim();
       if (!q) { searchResults.style.display = 'none'; return; }
-      // all está acessível via closure, mas como rebuildInterface redefine,
-      // usaremos o cache global window._allArticles
       const all = window._allArticles || [];
       const results = all.filter(a => a.title.toLowerCase().includes(q));
       searchResults.style.display = 'block';
@@ -764,105 +761,46 @@
         : '<p style="padding:8px;">Nenhum resultado.</p>';
     }
 
-    // 🔄 Função principal de carregamento COM CACHE E TIMEOUT
+    // Função auxiliar para tentar várias URLs de API
+    async function fetchAny(urls, timeoutMs) {
+      for (const url of urls) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), timeoutMs);
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timer);
+          if (!response.ok) continue;
+          const data = await response.json();
+          if (Array.isArray(data)) return data;
+        } catch (e) {
+          continue;
+        }
+      }
+      return null;
+    }
+
     // 🔄 Função principal de carregamento COM CACHE, TIMEOUT E FALLBACK ABSOLUTO
-async function loadPage() {
-  const CACHE_KEY = 'pautazero_artigos';
-  const CACHE_TIME_KEY = 'pautazero_artigos_time';
-  const MAX_CACHE_AGE = 5 * 60 * 1000;
-  const FETCH_TIMEOUT = 8000;
-  const API_URLS = [
-    '/api/portais',                        // relativa (funciona se servido pelo Worker)
-    'https://pautazero.com/api/portais'    // absoluta (fallback)
-  ];
+    async function loadPage() {
+      const CACHE_KEY = 'pautazero_artigos';
+      const CACHE_TIME_KEY = 'pautazero_artigos_time';
+      const MAX_CACHE_AGE = 5 * 60 * 1000;
+      const FETCH_TIMEOUT = 8000;
+      const API_URLS = [
+        '/api/portais',
+        'https://pautazero.com/api/portais'
+      ];
 
-  // 1. Cache fresco
-  const cachedData = sessionStorage.getItem(CACHE_KEY);
-  const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
-  if (cachedData && cachedTime) {
-    const age = Date.now() - parseInt(cachedTime, 10);
-    if (age < MAX_CACHE_AGE) {
-      const all = JSON.parse(cachedData);
-      window._allArticles = all;
-      buildInterface(all);
-      // atualização em segundo plano com a primeira URL que funcionar
-      fetchAny(API_URLS, FETCH_TIMEOUT)
-        .then(freshData => {
-          if (freshData) {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
-            sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-            window._allArticles = freshData;
-            buildInterface(freshData);
-          }
-        })
-        .catch(() => {});
-      return;
-    }
-  }
-
-  // 2. Sem cache válido: busca com timeout, tentando URLs alternativas
-  try {
-    const all = await fetchAny(API_URLS, FETCH_TIMEOUT);
-    if (!all) throw new Error('Nenhuma API disponível');
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify(all));
-    sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-    window._allArticles = all;
-    buildInterface(all);
-  } catch (err) {
-    console.error('Erro ao carregar a página:', err);
-    const oldCache = sessionStorage.getItem(CACHE_KEY);
-    if (oldCache) {
-      const all = JSON.parse(oldCache);
-      window._allArticles = all;
-      buildInterface(all);
-      const ticker = document.getElementById('tickerTrack');
-      if (ticker) ticker.innerHTML = '<span class="ticker-item">⚠️ Exibindo versão em cache. Atualizando...</span> ' + ticker.innerHTML;
-    } else {
-      // Mensagem de erro com botão de recarregar
-      document.getElementById('articlesGrid').innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:40px;">
-          <p style="margin-bottom:20px;">Não foi possível carregar o conteúdo.</p>
-          <button onclick="location.reload()" style="background:var(--accent);color:#fff;border:none;padding:10px 25px;border-radius:4px;cursor:pointer;font-family:var(--font-body);">
-            Tentar novamente
-          </button>
-          <p style="margin-top:15px;font-size:0.8rem;color:var(--text-muted);">Se o problema persistir, verifique sua conexão.</p>
-        </div>`;
-      document.getElementById('tickerTrack').innerHTML = 'Serviço temporariamente indisponível.';
-    }
-  }
-}
-
-// Função auxiliar para tentar várias URLs de API
-async function fetchAny(urls, timeoutMs) {
-  for (const url of urls) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      const response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timer);
-      if (!response.ok) continue;
-      const data = await response.json();
-      if (Array.isArray(data)) return data;
-    } catch (e) {
-      continue; // tenta próxima URL
-    }
-  }
-  return null; // todas falharam
-}
-
-      // 1. Tenta carregar do cache imediatamente
+      // 1. Cache fresco
       const cachedData = sessionStorage.getItem(CACHE_KEY);
       const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
       if (cachedData && cachedTime) {
         const age = Date.now() - parseInt(cachedTime, 10);
         if (age < MAX_CACHE_AGE) {
-          // Cache fresco: usa imediatamente
           const all = JSON.parse(cachedData);
           window._allArticles = all;
           buildInterface(all);
-          // Atualiza em segundo plano silenciosamente
-          fetch('/api/portais')
-            .then(res => res.ok ? res.json() : null)
+          // atualização silenciosa
+          fetchAny(API_URLS, FETCH_TIMEOUT)
             .then(freshData => {
               if (freshData) {
                 sessionStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
@@ -872,41 +810,38 @@ async function fetchAny(urls, timeoutMs) {
               }
             })
             .catch(() => {});
-          return; // interface já renderizada
+          return;
         }
       }
 
-      // 2. Sem cache válido: faz fetch com timeout
+      // 2. Sem cache válido: tenta as URLs com timeout
       try {
-        const fetchPromise = fetch('/api/portais').then(res => {
-          if (!res.ok) throw new Error('Falha ao carregar artigos');
-          return res.json();
-        });
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout')), FETCH_TIMEOUT)
-        );
-        const all = await Promise.race([fetchPromise, timeoutPromise]);
-
-        // Salva no cache
+        const all = await fetchAny(API_URLS, FETCH_TIMEOUT);
+        if (!all) throw new Error('Nenhuma API disponível');
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(all));
         sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
         window._allArticles = all;
         buildInterface(all);
-
       } catch (err) {
         console.error('Erro ao carregar a página:', err);
-        // 3. Fallback: tenta usar cache mesmo expirado
+        // 3. Fallback para cache expirado
         const oldCache = sessionStorage.getItem(CACHE_KEY);
         if (oldCache) {
           const all = JSON.parse(oldCache);
           window._allArticles = all;
           buildInterface(all);
-          // Aviso sutil de que são dados em cache
           const ticker = document.getElementById('tickerTrack');
           if (ticker) ticker.innerHTML = '<span class="ticker-item">⚠️ Exibindo versão em cache. Atualizando...</span> ' + ticker.innerHTML;
         } else {
-          // Nenhum cache, exibe mensagem de erro amigável
-          document.getElementById('articlesGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;">Não foi possível carregar o conteúdo. Verifique sua conexão e <a href="." style="color:var(--accent);">recarregue a página</a>.</p>';
+          // Mensagem de erro com botão "Tentar novamente"
+          document.getElementById('articlesGrid').innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:40px;">
+              <p style="margin-bottom:20px;">Não foi possível carregar o conteúdo.</p>
+              <button onclick="location.reload()" style="background:var(--accent);color:#fff;border:none;padding:10px 25px;border-radius:4px;cursor:pointer;font-family:var(--font-body);">
+                Tentar novamente
+              </button>
+              <p style="margin-top:15px;font-size:0.8rem;color:var(--text-muted);">Se o problema persistir, verifique sua conexão.</p>
+            </div>`;
           document.getElementById('tickerTrack').innerHTML = 'Serviço temporariamente indisponível.';
         }
       }
