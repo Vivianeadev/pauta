@@ -551,7 +551,6 @@
   </footer>
 
   <script>
-    // Funções auxiliares
     function slugify(text) {
       return String(text || "")
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -582,12 +581,11 @@
         if (!response.ok) throw new Error('Falha ao carregar artigos');
         const all = await response.json();
 
-        // Garante que todos tenham URL
         all.forEach(a => {
           if (!a.url) a.url = '/artigo/' + slugify(a.eixo) + '/' + slugify(a.tema) + '/' + slugify(a.slug) + '.html';
         });
 
-        // ------- CARROSSEL DE PALAVRAS (Ticker) -------
+        // Carrossel de palavras (ticker)
         const noticiasEixo = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'notícias');
         const tickerNoticias = noticiasEixo
           .sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt))
@@ -597,7 +595,7 @@
           : '<span class="ticker-item">Acompanhe as últimas notícias</span>';
         document.getElementById('tickerTrack').innerHTML = baseTickerItems + ' ' + baseTickerItems;
 
-        // ------- CARROSSEL DE IMAGENS (Hero) -------
+        // Carrossel de imagens
         const now = Date.now();
         const noticias15d = noticiasEixo.filter(a => {
           const t = new Date(a.publishAt).getTime();
@@ -624,7 +622,6 @@
           ).join('');
           document.getElementById('carouselIndicators').innerHTML = indicatorsHtml;
 
-          // Lógica do carrossel
           const slides = document.querySelectorAll('.slide');
           const indicators = document.querySelectorAll('.indicator');
           let current = 0;
@@ -643,7 +640,7 @@
           setInterval(() => show((current + 1) % slides.length), 5000);
         }
 
-        // ------- MEDICINA (30 aleatórios) -------
+        // Medicina
         const medicinaArticles = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'medicina');
         const shuffle = arr => arr.sort(() => Math.random() - 0.5);
         const medicinaRandom = shuffle([...medicinaArticles]).slice(0, 30);
@@ -667,7 +664,7 @@
           medicinaGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);">Nenhum artigo em Medicina ainda.</p>';
         }
 
-        // ------- DESTAQUES (6 mais recentes) -------
+        // Destaques (6 mais recentes)
         const latest = all.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 6);
         const articlesGrid = document.getElementById('articlesGrid');
         articlesGrid.innerHTML = latest.map(a => {
@@ -683,7 +680,7 @@
           </div>`;
         }).join('');
 
-        // ------- NICHOS (grid 4 colunas) -------
+        // Nichos (grid 4 colunas)
         const grouped = new Map();
         all.forEach(a => {
           const eixo = a.eixo || 'geral';
@@ -716,11 +713,10 @@
           nicheAccordion.innerHTML = '<p style="padding:20px;text-align:center;">Nenhum nicho disponível.</p>';
         }
 
-        // ------- SIDEBAR -------
-        // Recentes (5)
+        // Sidebar recentes
         document.getElementById('recentArticlesList').innerHTML = all.slice(0, 5).map(a => `<li><a href="${a.url}">${escTL(a.title)}</a></li>`).join('');
 
-        // Busca por título (já configurada)
+        // Busca por título
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
         searchInput.addEventListener('input', function() {
@@ -752,7 +748,7 @@
         colunistaInput.addEventListener('input', searchColunista);
         document.getElementById('colunistaSearchBtn').addEventListener('click', searchColunista);
 
-        // ------- EVENTOS GLOBAIS DE CLIQUE EM CARDS -------
+        // Eventos de clique em cards
         document.body.addEventListener('click', function(e) {
           const card = e.target.closest('.article-card, .niche-article-item');
           if (card && card.dataset.url && card.dataset.url !== '#') {
@@ -760,7 +756,7 @@
           }
         });
 
-        // ------- ACORDEÃO DOS NICHOS -------
+        // Acordeão dos nichos
         document.querySelectorAll('.niche-header').forEach(header => {
           header.addEventListener('click', function() {
             const content = this.nextElementSibling;
@@ -775,7 +771,7 @@
           });
         });
 
-        // ------- POLÍTICA DE PRIVACIDADE -------
+        // Política de Privacidade
         const privacyToggle = document.getElementById('privacyToggle');
         const privacyPanel = document.getElementById('privacyPanel');
         if (privacyToggle && privacyPanel) {
@@ -795,7 +791,6 @@
       }
     }
 
-    // Inicia o carregamento
     loadPage();
   </script>
 </body>
