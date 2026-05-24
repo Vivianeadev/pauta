@@ -557,311 +557,229 @@
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         .toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     }
+
     function escTL(str) {
-      return String(str).replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\${/g, '\\$');
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/`/g, '\\`')
+        .replace(/\${/g, '\\${');
     }
+
     const fallbackImages = {
       'Política & Geopolítica': 'https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=1200&q=80',
       'Tecnologia & Bioengenharia': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80',
       'Meio Ambiente': 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=1200&q=80',
       'default': 'https://images.unsplash.com/photo-1504711434969-e33886168d6c?w=1200&q=80'
     };
+
     function getSlideImage(slide) {
       return slide.image || fallbackImages[slide.tema] || fallbackImages['default'];
     }
 
-    // Função principal que monta toda a interface a partir dos artigos
-    function buildInterface(all) {
-      all.forEach(a => {
-        if (!a.url) a.url = '/artigo/' + slugify(a.eixo) + '/' + slugify(a.tema) + '/' + slugify(a.slug) + '.html';
-      });
+    async function loadPage() {
+      try {
+        const response = await fetch('/api/portais');
+        if (!response.ok) throw new Error('Falha ao carregar artigos');
+        const all = await response.json();
 
-      // Ticker de palavras
-      const noticiasEixo = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'notícias');
-      const tickerNoticias = noticiasEixo
-        .sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt))
-        .slice(0, 30);
-      const baseTickerItems = tickerNoticias.length
-        ? tickerNoticias.map(a => `<a class="ticker-item" href="${a.url}">${escTL(a.title)}</a>`).join(' <span style="color:var(--accent);margin:0 10px;">•</span> ')
-        : '<span class="ticker-item">Acompanhe as últimas notícias</span>';
-      document.getElementById('tickerTrack').innerHTML = baseTickerItems + ' ' + baseTickerItems;
-
-      // Carrossel de imagens
-      const now = Date.now();
-      const noticias15d = noticiasEixo.filter(a => {
-        const t = new Date(a.publishAt).getTime();
-        return !isNaN(t) && (now - t) <= 15 * 24 * 60 * 60 * 1000;
-      }).sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 8);
-
-      const carouselSection = document.getElementById('heroCarousel');
-      if (noticias15d.length > 0) {
-        carouselSection.style.display = 'block';
-        let slidesHtml = noticias15d.map((slide, i) => {
-          const imgUrl = getSlideImage(slide);
-          return `<div class="slide${i === 0 ? ' active' : ''}" style="background-image: url('${imgUrl}');">
-            <div class="slide-content">
-              <span class="slide-tag">${escTL(slide.tema || slide.eixo)}</span>
-              <h2 class="slide-title">${escTL(slide.title)}</h2>
-            </div>
-          </div>`;
-        }).join('');
-        document.getElementById('carouselContainer').innerHTML = slidesHtml;
-        let indicatorsHtml = noticias15d.map((_, i) =>
-          `<span class="indicator${i === 0 ? ' active' : ''}" data-index="${i}"></span>`
-        ).join('');
-        document.getElementById('carouselIndicators').innerHTML = indicatorsHtml;
-
-        const slides = document.querySelectorAll('.slide');
-        const indicators = document.querySelectorAll('.indicator');
-        let current = 0;
-        function show(idx) {
-          slides.forEach((s, i) => s.classList.toggle('active', i === idx));
-          indicators.forEach((d, i) => d.classList.toggle('active', i === idx));
-          current = idx;
-        }
-        indicators.forEach((dot, i) => dot.addEventListener('click', () => show(i)));
-        slides.forEach((slide, idx) => {
-          slide.addEventListener('click', () => {
-            const item = noticias15d[idx];
-            if (item && item.url) window.location.href = item.url;
-          });
+        all.forEach(a => {
+          if (!a.url) a.url = '/artigo/' + slugify(a.eixo) + '/' + slugify(a.tema) + '/' + slugify(a.slug) + '.html';
         });
-        if (window._carouselInterval) clearInterval(window._carouselInterval);
-        window._carouselInterval = setInterval(() => show((current + 1) % slides.length), 5000);
-      } else {
-        carouselSection.style.display = 'none';
-      }
 
-      // Medicina
-      const medicinaArticles = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'medicina');
-      const shuffle = arr => arr.sort(() => Math.random() - 0.5);
-      const medicinaRandom = shuffle([...medicinaArticles]).slice(0, 30);
-      const medicinaGrid = document.getElementById('medicinaGrid');
-      if (medicinaRandom.length) {
-        medicinaGrid.innerHTML = medicinaRandom.map(a => {
-          const imgHtml = a.image
-            ? `<div class="card-image" style="background-image:url(${escTL(a.image)})"></div>`
-            : '<div class="card-image"><i class="fas fa-stethoscope"></i></div>';
-          return `<div class="article-card" data-url="${a.url}">
-            ${imgHtml}
-            <div class="card-body">
-              <span class="card-tag">${escTL(a.tema || a.eixo)}</span>
-              <h3 class="card-title">${escTL(a.title)}</h3>
-              <p class="card-excerpt">${escTL(a.excerpt || '')}</p>
-              <span class="card-author">${escTL(a.author)}</span>
-            </div>
-          </div>`;
-        }).join('');
-      } else {
-        medicinaGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);">Nenhum artigo em Medicina ainda.</p>';
-      }
+        // Carrossel de palavras (ticker)
+        const noticiasEixo = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'notícias');
+        const tickerNoticias = noticiasEixo
+          .sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt))
+          .slice(0, 30);
+        const baseTickerItems = tickerNoticias.length
+          ? tickerNoticias.map(a => `<a class="ticker-item" href="${a.url}">${escTL(a.title)}</a>`).join(' <span style="color:var(--accent);margin:0 10px;">•</span> ')
+          : '<span class="ticker-item">Acompanhe as últimas notícias</span>';
+        document.getElementById('tickerTrack').innerHTML = baseTickerItems + ' ' + baseTickerItems;
 
-      // Destaques (6 mais recentes)
-      const latest = all.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 6);
-      const articlesGrid = document.getElementById('articlesGrid');
-      articlesGrid.innerHTML = latest.map(a => {
-        const img = a.image ? `<div class="card-image" style="background-image:url(${escTL(a.image)})"></div>` : '<div class="card-image"><i class="fas fa-image"></i></div>';
-        return `<div class="article-card" data-url="${a.url}">
-          ${img}
-          <div class="card-body">
-            <span class="card-tag">${escTL(a.eixo || '')}</span>
-            <h3 class="card-title">${escTL(a.title)}</h3>
-            <p class="card-excerpt">${escTL(a.excerpt || '')}</p>
-            <span class="card-author">${escTL(a.author || '')}</span>
-          </div>
-        </div>`;
-      }).join('');
+        // Carrossel de imagens
+        const now = Date.now();
+        const noticias15d = noticiasEixo.filter(a => {
+          const t = new Date(a.publishAt).getTime();
+          return !isNaN(t) && (now - t) <= 15 * 24 * 60 * 60 * 1000;
+        }).sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 8);
 
-      // Nichos
-      const grouped = new Map();
-      all.forEach(a => {
-        const eixo = a.eixo || 'geral';
-        if (!grouped.has(eixo)) grouped.set(eixo, []);
-        grouped.get(eixo).push(a);
-      });
-      const nicheAccordion = document.getElementById('nicheAccordion');
-      if (grouped.size > 0) {
-        const sortedEixos = Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b));
-        nicheAccordion.innerHTML = sortedEixos.map(eixo => {
-          const articles = grouped.get(eixo);
-          const randomArts = shuffle([...articles]).slice(0, 30);
-          const articleItems = randomArts.map(a => {
-            return `<div class="niche-article-item" data-url="${a.url}">
-              <h5>${escTL(a.title)}</h5>
-              <div class="meta">${escTL(a.author || '')}</div>
+        if (noticias15d.length > 0) {
+          const carouselSection = document.getElementById('heroCarousel');
+          carouselSection.style.display = 'block';
+
+          let slidesHtml = noticias15d.map((slide, i) => {
+            const imgUrl = getSlideImage(slide);
+            return `<div class="slide${i === 0 ? ' active' : ''}" style="background-image: url('${imgUrl}');">
+              <div class="slide-content">
+                <span class="slide-tag">${escTL(slide.tema || slide.eixo)}</span>
+                <h2 class="slide-title">${escTL(slide.title)}</h2>
+              </div>
             </div>`;
           }).join('');
-          return `<div class="niche-item">
-            <div class="niche-header">
-              <h4>${escTL(eixo)} (${articles.length})</h4>
-              <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="niche-content">
-              <div class="niche-articles">${articleItems}</div>
+          document.getElementById('carouselContainer').innerHTML = slidesHtml;
+
+          let indicatorsHtml = noticias15d.map((_, i) =>
+            `<span class="indicator${i === 0 ? ' active' : ''}" data-index="${i}"></span>`
+          ).join('');
+          document.getElementById('carouselIndicators').innerHTML = indicatorsHtml;
+
+          const slides = document.querySelectorAll('.slide');
+          const indicators = document.querySelectorAll('.indicator');
+          let current = 0;
+          function show(idx) {
+            slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+            indicators.forEach((d, i) => d.classList.toggle('active', i === idx));
+            current = idx;
+          }
+          indicators.forEach((dot, i) => dot.addEventListener('click', () => show(i)));
+          slides.forEach((slide, idx) => {
+            slide.addEventListener('click', () => {
+              const item = noticias15d[idx];
+              if (item && item.url) window.location.href = item.url;
+            });
+          });
+          setInterval(() => show((current + 1) % slides.length), 5000);
+        }
+
+        // Medicina
+        const medicinaArticles = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'medicina');
+        const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+        const medicinaRandom = shuffle([...medicinaArticles]).slice(0, 30);
+        const medicinaGrid = document.getElementById('medicinaGrid');
+        if (medicinaRandom.length) {
+          medicinaGrid.innerHTML = medicinaRandom.map(a => {
+            const imgHtml = a.image
+              ? `<div class="card-image" style="background-image:url(${escTL(a.image)})"></div>`
+              : '<div class="card-image"><i class="fas fa-stethoscope"></i></div>';
+            return `<div class="article-card" data-url="${a.url}">
+              ${imgHtml}
+              <div class="card-body">
+                <span class="card-tag">${escTL(a.tema || a.eixo)}</span>
+                <h3 class="card-title">${escTL(a.title)}</h3>
+                <p class="card-excerpt">${escTL(a.excerpt || '')}</p>
+                <span class="card-author">${escTL(a.author)}</span>
+              </div>
+            </div>`;
+          }).join('');
+        } else {
+          medicinaGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);">Nenhum artigo em Medicina ainda.</p>';
+        }
+
+        // Destaques (6 mais recentes)
+        const latest = all.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 6);
+        const articlesGrid = document.getElementById('articlesGrid');
+        articlesGrid.innerHTML = latest.map(a => {
+          const img = a.image ? `<div class="card-image" style="background-image:url(${escTL(a.image)})"></div>` : '<div class="card-image"><i class="fas fa-image"></i></div>';
+          return `<div class="article-card" data-url="${a.url}">
+            ${img}
+            <div class="card-body">
+              <span class="card-tag">${escTL(a.eixo || '')}</span>
+              <h3 class="card-title">${escTL(a.title)}</h3>
+              <p class="card-excerpt">${escTL(a.excerpt || '')}</p>
+              <span class="card-author">${escTL(a.author || '')}</span>
             </div>
           </div>`;
         }).join('');
-      } else {
-        nicheAccordion.innerHTML = '<p style="padding:20px;text-align:center;">Nenhum nicho disponível.</p>';
-      }
 
-      // Sidebar recentes
-      document.getElementById('recentArticlesList').innerHTML = all.slice(0, 5).map(a => `<li><a href="${a.url}">${escTL(a.title)}</a></li>`).join('');
-
-      // Reaplica acordeão dos nichos
-      document.querySelectorAll('.niche-header').forEach(header => {
-        header.removeEventListener('click', nicheToggle);
-        header.addEventListener('click', nicheToggle);
-      });
-
-      // Reaplica busca por título
-      const searchInput = document.getElementById('searchInput');
-      const searchResults = document.getElementById('searchResults');
-      searchInput.removeEventListener('input', titleSearchHandler);
-      searchInput.addEventListener('input', titleSearchHandler);
-
-      // Busca por colunista
-      const colunistaInput = document.getElementById('colunistaInput');
-      const colunistaResults = document.getElementById('colunistaResults');
-      function searchColunista() {
-        const q = colunistaInput.value.toLowerCase().trim();
-        if (!q) { colunistaResults.innerHTML = ''; return; }
-        const res = all.filter(a => a.author && a.author.toLowerCase().includes(q));
-        colunistaResults.innerHTML = res.length
-          ? res.map(a => `<li><a href="${a.url}">${escTL(a.title)} (${escTL(a.author)})</a></li>`).join('')
-          : '<li>Nenhum colunista encontrado.</li>';
-      }
-      colunistaInput.removeEventListener('input', searchColunista);
-      colunistaInput.addEventListener('input', searchColunista);
-      document.getElementById('colunistaSearchBtn').removeEventListener('click', searchColunista);
-      document.getElementById('colunistaSearchBtn').addEventListener('click', searchColunista);
-    }
-
-    // Handlers auxiliares
-    function nicheToggle() {
-      const content = this.nextElementSibling;
-      const icon = this.querySelector('i');
-      const isOpen = content.classList.contains('open');
-      document.querySelectorAll('.niche-content').forEach(c => c.classList.remove('open'));
-      document.querySelectorAll('.niche-header i').forEach(i => i.style.transform = 'rotate(0deg)');
-      if (!isOpen) {
-        content.classList.add('open');
-        icon.style.transform = 'rotate(180deg)';
-      }
-    }
-    function titleSearchHandler() {
-      const searchResults = document.getElementById('searchResults');
-      const q = this.value.toLowerCase().trim();
-      if (!q) { searchResults.style.display = 'none'; return; }
-      const all = window._allArticles || [];
-      const results = all.filter(a => a.title.toLowerCase().includes(q));
-      searchResults.style.display = 'block';
-      searchResults.innerHTML = results.length
-        ? results.map(a => `<div style="padding:8px;border-bottom:1px dotted #ccc;"><a href="${a.url}">${escTL(a.title)}</a></div>`).join('')
-        : '<p style="padding:8px;">Nenhum resultado.</p>';
-    }
-
-    // Função auxiliar para tentar várias URLs de API
-    async function fetchAny(urls, timeoutMs) {
-      for (const url of urls) {
-        try {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), timeoutMs);
-          const response = await fetch(url, { signal: controller.signal });
-          clearTimeout(timer);
-          if (!response.ok) continue;
-          const data = await response.json();
-          if (Array.isArray(data)) return data;
-        } catch (e) {
-          continue;
+        // Nichos (grid 4 colunas)
+        const grouped = new Map();
+        all.forEach(a => {
+          const eixo = a.eixo || 'geral';
+          if (!grouped.has(eixo)) grouped.set(eixo, []);
+          grouped.get(eixo).push(a);
+        });
+        const nicheAccordion = document.getElementById('nicheAccordion');
+        if (grouped.size > 0) {
+          const sortedEixos = Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b));
+          nicheAccordion.innerHTML = sortedEixos.map(eixo => {
+            const articles = grouped.get(eixo);
+            const randomArts = shuffle([...articles]).slice(0, 30);
+            const articleItems = randomArts.map(a => {
+              return `<div class="niche-article-item" data-url="${a.url}">
+                <h5>${escTL(a.title)}</h5>
+                <div class="meta">${escTL(a.author || '')}</div>
+              </div>`;
+            }).join('');
+            return `<div class="niche-item">
+              <div class="niche-header">
+                <h4>${escTL(eixo)} (${articles.length})</h4>
+                <i class="fas fa-chevron-down"></i>
+              </div>
+              <div class="niche-content">
+                <div class="niche-articles">${articleItems}</div>
+              </div>
+            </div>`;
+          }).join('');
+        } else {
+          nicheAccordion.innerHTML = '<p style="padding:20px;text-align:center;">Nenhum nicho disponível.</p>';
         }
-      }
-      return null;
-    }
 
-    // 🔄 Função principal de carregamento COM CACHE, TIMEOUT E FALLBACK ABSOLUTO
-    async function loadPage() {
-      const CACHE_KEY = 'pautazero_artigos';
-      const CACHE_TIME_KEY = 'pautazero_artigos_time';
-      const MAX_CACHE_AGE = 5 * 60 * 1000;
-      const FETCH_TIMEOUT = 8000;
-      const API_URLS = [
-        '/api/portais',
-        'https://pautazero.com/api/portais'
-      ];
+        // Sidebar recentes
+        document.getElementById('recentArticlesList').innerHTML = all.slice(0, 5).map(a => `<li><a href="${a.url}">${escTL(a.title)}</a></li>`).join('');
 
-      // 1. Cache fresco
-      const cachedData = sessionStorage.getItem(CACHE_KEY);
-      const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
-      if (cachedData && cachedTime) {
-        const age = Date.now() - parseInt(cachedTime, 10);
-        if (age < MAX_CACHE_AGE) {
-          const all = JSON.parse(cachedData);
-          window._allArticles = all;
-          buildInterface(all);
-          // atualização silenciosa
-          fetchAny(API_URLS, FETCH_TIMEOUT)
-            .then(freshData => {
-              if (freshData) {
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
-                sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-                window._allArticles = freshData;
-                buildInterface(freshData);
-              }
-            })
-            .catch(() => {});
-          return;
+        // Busca por título
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        searchInput.addEventListener('input', function() {
+          const q = this.value.toLowerCase().trim();
+          if (!q) { searchResults.style.display = 'none'; return; }
+          const results = all.filter(a => a.title.toLowerCase().includes(q));
+          searchResults.style.display = 'block';
+          searchResults.innerHTML = results.length
+            ? results.map(a => `<div style="padding:8px;border-bottom:1px dotted #ccc;"><a href="${a.url}">${escTL(a.title)}</a></div>`).join('')
+            : '<p style="padding:8px;">Nenhum resultado.</p>';
+        });
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.search-box') && !e.target.closest('#searchResults')) {
+            searchResults.style.display = 'none';
+          }
+        });
+
+        // Busca por colunista
+        const colunistaInput = document.getElementById('colunistaInput');
+        const colunistaResults = document.getElementById('colunistaResults');
+        function searchColunista() {
+          const q = colunistaInput.value.toLowerCase().trim();
+          if (!q) { colunistaResults.innerHTML = ''; return; }
+          const res = all.filter(a => a.author && a.author.toLowerCase().includes(q));
+          colunistaResults.innerHTML = res.length
+            ? res.map(a => `<li><a href="${a.url}">${escTL(a.title)} (${escTL(a.author)})</a></li>`).join('')
+            : '<li>Nenhum colunista encontrado.</li>';
         }
-      }
+        colunistaInput.addEventListener('input', searchColunista);
+        document.getElementById('colunistaSearchBtn').addEventListener('click', searchColunista);
 
-      // 2. Sem cache válido: tenta as URLs com timeout
-      try {
-        const all = await fetchAny(API_URLS, FETCH_TIMEOUT);
-        if (!all) throw new Error('Nenhuma API disponível');
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify(all));
-        sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
-        window._allArticles = all;
-        buildInterface(all);
+        // Eventos de clique em cards
+        document.body.addEventListener('click', function(e) {
+          const card = e.target.closest('.article-card, .niche-article-item');
+          if (card && card.dataset.url && card.dataset.url !== '#') {
+            window.location.href = card.dataset.url;
+          }
+        });
+
+        // Acordeão dos nichos
+        document.querySelectorAll('.niche-header').forEach(header => {
+          header.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            const icon = this.querySelector('i');
+            const isOpen = content.classList.contains('open');
+            document.querySelectorAll('.niche-content').forEach(c => c.classList.remove('open'));
+            document.querySelectorAll('.niche-header i').forEach(i => i.style.transform = 'rotate(0deg)');
+            if (!isOpen) {
+              content.classList.add('open');
+              icon.style.transform = 'rotate(180deg)';
+            }
+          });
+        });
+
       } catch (err) {
         console.error('Erro ao carregar a página:', err);
-        // 3. Fallback para cache expirado
-        const oldCache = sessionStorage.getItem(CACHE_KEY);
-        if (oldCache) {
-          const all = JSON.parse(oldCache);
-          window._allArticles = all;
-          buildInterface(all);
-          const ticker = document.getElementById('tickerTrack');
-          if (ticker) ticker.innerHTML = '<span class="ticker-item">⚠️ Exibindo versão em cache. Atualizando...</span> ' + ticker.innerHTML;
-        } else {
-          // Mensagem de erro com botão "Tentar novamente"
-          document.getElementById('articlesGrid').innerHTML = `
-            <div style="grid-column:1/-1;text-align:center;padding:40px;">
-              <p style="margin-bottom:20px;">Não foi possível carregar o conteúdo.</p>
-              <button onclick="location.reload()" style="background:var(--accent);color:#fff;border:none;padding:10px 25px;border-radius:4px;cursor:pointer;font-family:var(--font-body);">
-                Tentar novamente
-              </button>
-              <p style="margin-top:15px;font-size:0.8rem;color:var(--text-muted);">Se o problema persistir, verifique sua conexão.</p>
-            </div>`;
-          document.getElementById('tickerTrack').innerHTML = 'Serviço temporariamente indisponível.';
-        }
+        document.getElementById('articlesGrid').innerHTML = '<p>Erro ao carregar conteúdo. Tente novamente.</p>';
+        document.getElementById('tickerTrack').innerHTML = 'Erro ao carregar notícias.';
       }
     }
 
-    // Eventos globais de clique para cards
-    document.body.addEventListener('click', function(e) {
-      const card = e.target.closest('.article-card, .niche-article-item');
-      if (card && card.dataset.url && card.dataset.url !== '#') {
-        window.location.href = card.dataset.url;
-      }
-    });
-    document.addEventListener('click', function(e) {
-      const searchResults = document.getElementById('searchResults');
-      if (!e.target.closest('.search-box') && !e.target.closest('#searchResults')) {
-        if (searchResults) searchResults.style.display = 'none';
-      }
-    });
-
-    // Política de privacidade (independente da API)
+    // 🔧 ATIVAÇÃO DA POLÍTICA DE PRIVACIDADE – SEMPRE FUNCIONA, INDEPENDENTE DA API
     (function() {
       const privacyToggle = document.getElementById('privacyToggle');
       const privacyPanel = document.getElementById('privacyPanel');
@@ -876,7 +794,7 @@
       }
     })();
 
-    // Iniciar tudo
+    // Iniciar carregamento dos artigos
     loadPage();
   </script>
 </body>
