@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -113,9 +112,15 @@
         .replace(/\${/g, '\\${');
     }
 
-    // 🛡️ Usa a imagem fornecida pela API. Se não existir, retorna string vazia (sem fallback externo).
+    const fallbackImages = {
+      'Política & Geopolítica': 'https://images.unsplash.com/photo-1529101091764-c3526daf38fe?w=1200&q=80',
+      'Tecnologia & Bioengenharia': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80',
+      'Meio Ambiente': 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=1200&q=80',
+      'default': 'https://images.unsplash.com/photo-1504711434969-e33886168d6c?w=1200&q=80'
+    };
+
     function getSlideImage(slide) {
-      return slide.image || '';
+      return slide.image || fallbackImages[slide.tema] || fallbackImages['default'];
     }
 
     async function loadPage() {
@@ -151,10 +156,7 @@
 
           let slidesHtml = noticias15d.map((slide, i) => {
             const imgUrl = getSlideImage(slide);
-            const bgStyle = imgUrl
-              ? `background-image: url('${imgUrl}');`
-              : 'background-color: #1a4b6d;'; /* fundo neutro se não houver imagem */
-            return `<div class="slide${i === 0 ? ' active' : ''}" style="${bgStyle}">
+            return `<div class="slide${i === 0 ? ' active' : ''}" style="background-image: url('${imgUrl}');">
               <div class="slide-content">
                 <span class="slide-tag">${escTL(slide.tema || slide.eixo)}</span>
                 <h2 class="slide-title">${escTL(slide.title)}</h2>
