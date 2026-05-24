@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* – Todo o CSS original permanece inalterado – */
     :root {
       --bg: #ffffff;
       --primary: #0a3147;
@@ -444,23 +445,17 @@
 
     /* Responsividade mantendo harmonia */
     @media (max-width: 1200px) {
-      .niche-accordion {
-        grid-template-columns: repeat(3, 1fr);
-      }
+      .niche-accordion { grid-template-columns: repeat(3, 1fr); }
     }
     @media (max-width: 900px) {
-      .niche-accordion {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .niche-accordion { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 768px) {
       .main-grid { grid-template-columns: 1fr; }
       .header-inner { flex-direction: column; gap: 10px; }
       .nav-links { gap: 15px; }
       .slide-content { max-width: 100%; }
-      .niche-accordion {
-        grid-template-columns: 1fr;
-      }
+      .niche-accordion { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -576,210 +571,238 @@
       return slide.image || fallbackImages[slide.tema] || fallbackImages['default'];
     }
 
+    // DADOS DE EXEMPLO – serão usados caso a API não responda
+    function getSampleData() {
+      const today = new Date();
+      const daysAgo = (d) => {
+        const dt = new Date(today);
+        dt.setDate(dt.getDate() - d);
+        return dt.toISOString();
+      };
+      return [
+        // Eixo "Notícias" (para ticker e carrossel)
+        { title: "Cúpula do G20 discute novo tratado climático", excerpt: "Líderes mundiais se reúnem para definir metas de redução de emissões.", author: "Mariana Costa", image: "https://images.unsplash.com/photo-1579616045007-9e8e1b90b7cf?w=1200&q=80", eixo: "Notícias", tema: "Política & Geopolítica", slug: "cupula-g20-clima", publishAt: daysAgo(1) },
+        { title: "Startup brasileira desenvolve prótese neural acessível", excerpt: "Dispositivo promete devolver movimentos a pacientes com lesão medular.", author: "Carlos Andrade", image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&q=80", eixo: "Notícias", tema: "Tecnologia & Bioengenharia", slug: "protese-neural-startup", publishAt: daysAgo(2) },
+        { title: "Enchentes no Sul: governo antecipa auxílio reconstrução", excerpt: "Famílias atingidas receberão repasses a partir da próxima semana.", author: "Ana Ribeiro", image: "https://images.unsplash.com/photo-1572376067227-69eea4a5583a?w=1200&q=80", eixo: "Notícias", tema: "Meio Ambiente", slug: "enchentes-sul-auxilio", publishAt: daysAgo(3) },
+        { title: "Oscar 2026: filme nacional entra na lista de indicados", excerpt: "Produção brasileira surpreende e concorre em três categorias.", author: "Júlia Mello", image: "https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=1200&q=80", eixo: "Notícias", tema: "Cultura", slug: "oscar-2026-brasil", publishAt: daysAgo(5) },
+        { title: "Inflação fecha trimestre dentro da meta, diz IBGE", excerpt: "Índice oficial registra alta de 0,32% em março, acumulado abaixo do teto.", author: "Pedro Lima", eixo: "Notícias", tema: "Economia", slug: "inflacao-meta-ibge", publishAt: daysAgo(6) },
+        { title: "Novo tratamento contra Alzheimer entra em fase 3", excerpt: "Estudo multicêntrico aponta redução de placas amiloides em 80% dos pacientes.", author: "Dr. Ricardo Lemos", image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&q=80", eixo: "Notícias", tema: "Medicina", slug: "tratamento-alzheimer-fase3", publishAt: daysAgo(7) },
+        // Eixo "Medicina"
+        { title: "Avanços em terapia gênica para distrofia muscular", excerpt: "Pesquisadores da USP obtêm resultados promissores com CRISPR.", author: "Dr. Ricardo Lemos", image: "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=1200&q=80", eixo: "Medicina", tema: "Genética", slug: "terapia-genica-distrofia", publishAt: daysAgo(4) },
+        { title: "Canabidiol reduz crises epilépticas em crianças, mostra estudo", excerpt: "Pesquisa brasileira reforça eficácia e segurança do CBD.", author: "Dra. Fernanda Torres", eixo: "Medicina", tema: "Farmacologia", slug: "canabidiol-epilepsia", publishAt: daysAgo(8) },
+        { title: "Inteligência artificial detecta câncer de pele com precisão de 97%", excerpt: "Algoritmo desenvolvido em parceria com a Unicamp será testado no SUS.", author: "Rafael Cunha", image: "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=1200&q=80", eixo: "Medicina", tema: "Tecnologia", slug: "ia-cancer-pele", publishAt: daysAgo(10) },
+        { title: "Primeiro transplante de coração artificial total no Brasil", excerpt: "Paciente de 45 anos passa bem após cirurgia inédita no Incor.", author: "Patrícia Neves", eixo: "Medicina", tema: "Cirurgia", slug: "coracao-artificial-brasil", publishAt: daysAgo(12) },
+        // Eixos diversos para nichos
+        { title: "Mudanças climáticas aceleram migração de espécies marinhas", excerpt: "Estudo alerta para impactos na pesca e biodiversidade costeira.", author: "Lucas Fontes", image: "https://images.unsplash.com/photo-1524704796728-2e7a0b50ca26?w=1200&q=80", eixo: "Meio Ambiente", tema: "Oceanos", slug: "migracao-especies-marinhas", publishAt: daysAgo(2) },
+        { title: "Brasil testa primeiro ônibus movido a hidrogênio verde", excerpt: "Veículo começa a circular em São Paulo como parte do programa de descarbonização.", author: "Bianca Souza", eixo: "Tecnologia & Bioengenharia", tema: "Energia", slug: "onibus-hidrogenio-verde", publishAt: daysAgo(9) },
+        { title: "Cultura maker ganha espaço nas escolas públicas", excerpt: "Laboratórios de fabricação digital incentivam criatividade e aprendizado prático.", author: "Helena Martins", eixo: "Educação", tema: "Inovação", slug: "cultura-maker-escolas", publishAt: daysAgo(11) },
+        { title: "Mercado financeiro reduz projeção de juros para 2026", excerpt: "Analistas preveem Selic em 9,5% no fim do ciclo, estimulando investimentos.", author: "Pedro Lima", eixo: "Economia", tema: "Política Monetária", slug: "projecao-juros-2026", publishAt: daysAgo(3) },
+        { title: "Nova série documental sobre povos originários estreia na TV", excerpt: "Produção mostra a luta pela demarcação de terras em seis estados.", author: "Júlia Mello", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80", eixo: "Cultura", tema: "Documentário", slug: "serie-povos-originarios", publishAt: daysAgo(0) }
+      ];
+    }
+
     async function loadPage() {
+      let all = [];
       try {
         const response = await fetch('/api/portais');
-        if (!response.ok) throw new Error('Falha ao carregar artigos');
-        const all = await response.json();
+        if (!response.ok) throw new Error('API indisponível');
+        all = await response.json();
+      } catch (err) {
+        console.warn('API não encontrada, usando dados de demonstração.');
+        all = getSampleData();
+      }
 
-        all.forEach(a => {
-          if (!a.url) a.url = '/artigo/' + slugify(a.eixo) + '/' + slugify(a.tema) + '/' + slugify(a.slug) + '.html';
-        });
+      // Garante que cada artigo tenha url
+      all.forEach(a => {
+        if (!a.url) a.url = '/artigo/' + slugify(a.eixo) + '/' + slugify(a.tema) + '/' + slugify(a.slug) + '.html';
+      });
 
-        // Carrossel de palavras (ticker)
-        const noticiasEixo = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'notícias');
-        const tickerNoticias = noticiasEixo
-          .sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt))
-          .slice(0, 30);
-        const baseTickerItems = tickerNoticias.length
-          ? tickerNoticias.map(a => `<a class="ticker-item" href="${a.url}">${escTL(a.title)}</a>`).join(' <span style="color:var(--accent);margin:0 10px;">•</span> ')
-          : '<span class="ticker-item">Acompanhe as últimas notícias</span>';
-        document.getElementById('tickerTrack').innerHTML = baseTickerItems + ' ' + baseTickerItems;
+      // Carrossel de palavras (ticker)
+      const noticiasEixo = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'notícias');
+      const tickerNoticias = noticiasEixo.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 30);
+      const baseTickerItems = tickerNoticias.length
+        ? tickerNoticias.map(a => `<a class="ticker-item" href="${a.url}">${escTL(a.title)}</a>`).join(' <span style="color:var(--accent);margin:0 10px;">•</span> ')
+        : '<span class="ticker-item">Acompanhe as últimas notícias</span>';
+      document.getElementById('tickerTrack').innerHTML = baseTickerItems + ' ' + baseTickerItems;
 
-        // Carrossel de imagens
-        const now = Date.now();
-        const noticias15d = noticiasEixo.filter(a => {
-          const t = new Date(a.publishAt).getTime();
-          return !isNaN(t) && (now - t) <= 15 * 24 * 60 * 60 * 1000;
-        }).sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 8);
+      // Carrossel de imagens
+      const now = Date.now();
+      const noticias15d = noticiasEixo.filter(a => {
+        const t = new Date(a.publishAt).getTime();
+        return !isNaN(t) && (now - t) <= 15 * 24 * 60 * 60 * 1000;
+      }).sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 8);
 
-        if (noticias15d.length > 0) {
-          const carouselSection = document.getElementById('heroCarousel');
-          carouselSection.style.display = 'block';
+      if (noticias15d.length > 0) {
+        const carouselSection = document.getElementById('heroCarousel');
+        carouselSection.style.display = 'block';
 
-          let slidesHtml = noticias15d.map((slide, i) => {
-            const imgUrl = getSlideImage(slide);
-            return `<div class="slide${i === 0 ? ' active' : ''}" style="background-image: url('${imgUrl}');">
-              <div class="slide-content">
-                <span class="slide-tag">${escTL(slide.tema || slide.eixo)}</span>
-                <h2 class="slide-title">${escTL(slide.title)}</h2>
-              </div>
-            </div>`;
-          }).join('');
-          document.getElementById('carouselContainer').innerHTML = slidesHtml;
-
-          let indicatorsHtml = noticias15d.map((_, i) =>
-            `<span class="indicator${i === 0 ? ' active' : ''}" data-index="${i}"></span>`
-          ).join('');
-          document.getElementById('carouselIndicators').innerHTML = indicatorsHtml;
-
-          const slides = document.querySelectorAll('.slide');
-          const indicators = document.querySelectorAll('.indicator');
-          let current = 0;
-          function show(idx) {
-            slides.forEach((s, i) => s.classList.toggle('active', i === idx));
-            indicators.forEach((d, i) => d.classList.toggle('active', i === idx));
-            current = idx;
-          }
-          indicators.forEach((dot, i) => dot.addEventListener('click', () => show(i)));
-          slides.forEach((slide, idx) => {
-            slide.addEventListener('click', () => {
-              const item = noticias15d[idx];
-              if (item && item.url) window.location.href = item.url;
-            });
-          });
-          setInterval(() => show((current + 1) % slides.length), 5000);
-        }
-
-        // Medicina
-        const medicinaArticles = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'medicina');
-        const shuffle = arr => arr.sort(() => Math.random() - 0.5);
-        const medicinaRandom = shuffle([...medicinaArticles]).slice(0, 30);
-        const medicinaGrid = document.getElementById('medicinaGrid');
-        if (medicinaRandom.length) {
-          medicinaGrid.innerHTML = medicinaRandom.map(a => {
-            const imgHtml = a.image
-              ? `<div class="card-image" style="background-image:url(${escTL(a.image)})"></div>`
-              : '<div class="card-image"><i class="fas fa-stethoscope"></i></div>';
-            return `<div class="article-card" data-url="${a.url}">
-              ${imgHtml}
-              <div class="card-body">
-                <span class="card-tag">${escTL(a.tema || a.eixo)}</span>
-                <h3 class="card-title">${escTL(a.title)}</h3>
-                <p class="card-excerpt">${escTL(a.excerpt || '')}</p>
-                <span class="card-author">${escTL(a.author)}</span>
-              </div>
-            </div>`;
-          }).join('');
-        } else {
-          medicinaGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);">Nenhum artigo em Medicina ainda.</p>';
-        }
-
-        // Destaques (6 mais recentes)
-        const latest = all.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 6);
-        const articlesGrid = document.getElementById('articlesGrid');
-        articlesGrid.innerHTML = latest.map(a => {
-          const img = a.image ? `<div class="card-image" style="background-image:url(${escTL(a.image)})"></div>` : '<div class="card-image"><i class="fas fa-image"></i></div>';
-          return `<div class="article-card" data-url="${a.url}">
-            ${img}
-            <div class="card-body">
-              <span class="card-tag">${escTL(a.eixo || '')}</span>
-              <h3 class="card-title">${escTL(a.title)}</h3>
-              <p class="card-excerpt">${escTL(a.excerpt || '')}</p>
-              <span class="card-author">${escTL(a.author || '')}</span>
+        let slidesHtml = noticias15d.map((slide, i) => {
+          const imgUrl = getSlideImage(slide);
+          return `<div class="slide${i === 0 ? ' active' : ''}" style="background-image: url('${imgUrl}');">
+            <div class="slide-content">
+              <span class="slide-tag">${escTL(slide.tema || slide.eixo)}</span>
+              <h2 class="slide-title">${escTL(slide.title)}</h2>
             </div>
           </div>`;
         }).join('');
+        document.getElementById('carouselContainer').innerHTML = slidesHtml;
 
-        // Nichos (grid 4 colunas)
-        const grouped = new Map();
-        all.forEach(a => {
-          const eixo = a.eixo || 'geral';
-          if (!grouped.has(eixo)) grouped.set(eixo, []);
-          grouped.get(eixo).push(a);
-        });
-        const nicheAccordion = document.getElementById('nicheAccordion');
-        if (grouped.size > 0) {
-          const sortedEixos = Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b));
-          nicheAccordion.innerHTML = sortedEixos.map(eixo => {
-            const articles = grouped.get(eixo);
-            const randomArts = shuffle([...articles]).slice(0, 30);
-            const articleItems = randomArts.map(a => {
-              return `<div class="niche-article-item" data-url="${a.url}">
-                <h5>${escTL(a.title)}</h5>
-                <div class="meta">${escTL(a.author || '')}</div>
-              </div>`;
-            }).join('');
-            return `<div class="niche-item">
-              <div class="niche-header">
-                <h4>${escTL(eixo)} (${articles.length})</h4>
-                <i class="fas fa-chevron-down"></i>
-              </div>
-              <div class="niche-content">
-                <div class="niche-articles">${articleItems}</div>
-              </div>
-            </div>`;
-          }).join('');
-        } else {
-          nicheAccordion.innerHTML = '<p style="padding:20px;text-align:center;">Nenhum nicho disponível.</p>';
+        let indicatorsHtml = noticias15d.map((_, i) =>
+          `<span class="indicator${i === 0 ? ' active' : ''}" data-index="${i}"></span>`
+        ).join('');
+        document.getElementById('carouselIndicators').innerHTML = indicatorsHtml;
+
+        const slides = document.querySelectorAll('.slide');
+        const indicators = document.querySelectorAll('.indicator');
+        let current = 0;
+        function show(idx) {
+          slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+          indicators.forEach((d, i) => d.classList.toggle('active', i === idx));
+          current = idx;
         }
-
-        // Sidebar recentes
-        document.getElementById('recentArticlesList').innerHTML = all.slice(0, 5).map(a => `<li><a href="${a.url}">${escTL(a.title)}</a></li>`).join('');
-
-        // Busca por título
-        const searchInput = document.getElementById('searchInput');
-        const searchResults = document.getElementById('searchResults');
-        searchInput.addEventListener('input', function() {
-          const q = this.value.toLowerCase().trim();
-          if (!q) { searchResults.style.display = 'none'; return; }
-          const results = all.filter(a => a.title.toLowerCase().includes(q));
-          searchResults.style.display = 'block';
-          searchResults.innerHTML = results.length
-            ? results.map(a => `<div style="padding:8px;border-bottom:1px dotted #ccc;"><a href="${a.url}">${escTL(a.title)}</a></div>`).join('')
-            : '<p style="padding:8px;">Nenhum resultado.</p>';
-        });
-        document.addEventListener('click', function(e) {
-          if (!e.target.closest('.search-box') && !e.target.closest('#searchResults')) {
-            searchResults.style.display = 'none';
-          }
-        });
-
-        // Busca por colunista
-        const colunistaInput = document.getElementById('colunistaInput');
-        const colunistaResults = document.getElementById('colunistaResults');
-        function searchColunista() {
-          const q = colunistaInput.value.toLowerCase().trim();
-          if (!q) { colunistaResults.innerHTML = ''; return; }
-          const res = all.filter(a => a.author && a.author.toLowerCase().includes(q));
-          colunistaResults.innerHTML = res.length
-            ? res.map(a => `<li><a href="${a.url}">${escTL(a.title)} (${escTL(a.author)})</a></li>`).join('')
-            : '<li>Nenhum colunista encontrado.</li>';
-        }
-        colunistaInput.addEventListener('input', searchColunista);
-        document.getElementById('colunistaSearchBtn').addEventListener('click', searchColunista);
-
-        // Eventos de clique em cards
-        document.body.addEventListener('click', function(e) {
-          const card = e.target.closest('.article-card, .niche-article-item');
-          if (card && card.dataset.url && card.dataset.url !== '#') {
-            window.location.href = card.dataset.url;
-          }
-        });
-
-        // Acordeão dos nichos
-        document.querySelectorAll('.niche-header').forEach(header => {
-          header.addEventListener('click', function() {
-            const content = this.nextElementSibling;
-            const icon = this.querySelector('i');
-            const isOpen = content.classList.contains('open');
-            document.querySelectorAll('.niche-content').forEach(c => c.classList.remove('open'));
-            document.querySelectorAll('.niche-header i').forEach(i => i.style.transform = 'rotate(0deg)');
-            if (!isOpen) {
-              content.classList.add('open');
-              icon.style.transform = 'rotate(180deg)';
-            }
+        indicators.forEach((dot, i) => dot.addEventListener('click', () => show(i)));
+        slides.forEach((slide, idx) => {
+          slide.addEventListener('click', () => {
+            const item = noticias15d[idx];
+            if (item && item.url) window.location.href = item.url;
           });
         });
-
-      } catch (err) {
-        console.error('Erro ao carregar a página:', err);
-        document.getElementById('articlesGrid').innerHTML = '<p>Erro ao carregar conteúdo. Tente novamente.</p>';
-        document.getElementById('tickerTrack').innerHTML = 'Erro ao carregar notícias.';
+        setInterval(() => show((current + 1) % slides.length), 5000);
       }
+
+      // Medicina
+      const medicinaArticles = all.filter(a => a.eixo && a.eixo.toLowerCase() === 'medicina');
+      const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+      const medicinaRandom = shuffle([...medicinaArticles]).slice(0, 30);
+      const medicinaGrid = document.getElementById('medicinaGrid');
+      if (medicinaRandom.length) {
+        medicinaGrid.innerHTML = medicinaRandom.map(a => {
+          const imgHtml = a.image
+            ? `<div class="card-image" style="background-image:url(${escTL(a.image)})"></div>`
+            : '<div class="card-image"><i class="fas fa-stethoscope"></i></div>';
+          return `<div class="article-card" data-url="${a.url}">
+            ${imgHtml}
+            <div class="card-body">
+              <span class="card-tag">${escTL(a.tema || a.eixo)}</span>
+              <h3 class="card-title">${escTL(a.title)}</h3>
+              <p class="card-excerpt">${escTL(a.excerpt || '')}</p>
+              <span class="card-author">${escTL(a.author)}</span>
+            </div>
+          </div>`;
+        }).join('');
+      } else {
+        medicinaGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);">Nenhum artigo em Medicina ainda.</p>';
+      }
+
+      // Destaques (6 mais recentes)
+      const latest = all.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt)).slice(0, 6);
+      const articlesGrid = document.getElementById('articlesGrid');
+      articlesGrid.innerHTML = latest.map(a => {
+        const img = a.image ? `<div class="card-image" style="background-image:url(${escTL(a.image)})"></div>` : '<div class="card-image"><i class="fas fa-image"></i></div>';
+        return `<div class="article-card" data-url="${a.url}">
+          ${img}
+          <div class="card-body">
+            <span class="card-tag">${escTL(a.eixo || '')}</span>
+            <h3 class="card-title">${escTL(a.title)}</h3>
+            <p class="card-excerpt">${escTL(a.excerpt || '')}</p>
+            <span class="card-author">${escTL(a.author || '')}</span>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Nichos (grid 4 colunas)
+      const grouped = new Map();
+      all.forEach(a => {
+        const eixo = a.eixo || 'geral';
+        if (!grouped.has(eixo)) grouped.set(eixo, []);
+        grouped.get(eixo).push(a);
+      });
+      const nicheAccordion = document.getElementById('nicheAccordion');
+      if (grouped.size > 0) {
+        const sortedEixos = Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b));
+        nicheAccordion.innerHTML = sortedEixos.map(eixo => {
+          const articles = grouped.get(eixo);
+          const randomArts = shuffle([...articles]).slice(0, 30);
+          const articleItems = randomArts.map(a => {
+            return `<div class="niche-article-item" data-url="${a.url}">
+              <h5>${escTL(a.title)}</h5>
+              <div class="meta">${escTL(a.author || '')}</div>
+            </div>`;
+          }).join('');
+          return `<div class="niche-item">
+            <div class="niche-header">
+              <h4>${escTL(eixo)} (${articles.length})</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="niche-content">
+              <div class="niche-articles">${articleItems}</div>
+            </div>
+          </div>`;
+        }).join('');
+      } else {
+        nicheAccordion.innerHTML = '<p style="padding:20px;text-align:center;">Nenhum nicho disponível.</p>';
+      }
+
+      // Sidebar recentes
+      document.getElementById('recentArticlesList').innerHTML = all.slice(0, 5).map(a => `<li><a href="${a.url}">${escTL(a.title)}</a></li>`).join('');
+
+      // Busca por título
+      const searchInput = document.getElementById('searchInput');
+      const searchResults = document.getElementById('searchResults');
+      searchInput.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        if (!q) { searchResults.style.display = 'none'; return; }
+        const results = all.filter(a => a.title.toLowerCase().includes(q));
+        searchResults.style.display = 'block';
+        searchResults.innerHTML = results.length
+          ? results.map(a => `<div style="padding:8px;border-bottom:1px dotted #ccc;"><a href="${a.url}">${escTL(a.title)}</a></div>`).join('')
+          : '<p style="padding:8px;">Nenhum resultado.</p>';
+      });
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-box') && !e.target.closest('#searchResults')) {
+          searchResults.style.display = 'none';
+        }
+      });
+
+      // Busca por colunista
+      const colunistaInput = document.getElementById('colunistaInput');
+      const colunistaResults = document.getElementById('colunistaResults');
+      function searchColunista() {
+        const q = colunistaInput.value.toLowerCase().trim();
+        if (!q) { colunistaResults.innerHTML = ''; return; }
+        const res = all.filter(a => a.author && a.author.toLowerCase().includes(q));
+        colunistaResults.innerHTML = res.length
+          ? res.map(a => `<li><a href="${a.url}">${escTL(a.title)} (${escTL(a.author)})</a></li>`).join('')
+          : '<li>Nenhum colunista encontrado.</li>';
+      }
+      colunistaInput.addEventListener('input', searchColunista);
+      document.getElementById('colunistaSearchBtn').addEventListener('click', searchColunista);
+
+      // Eventos de clique em cards
+      document.body.addEventListener('click', function(e) {
+        const card = e.target.closest('.article-card, .niche-article-item');
+        if (card && card.dataset.url && card.dataset.url !== '#') {
+          window.location.href = card.dataset.url;
+        }
+      });
+
+      // Acordeão dos nichos
+      document.querySelectorAll('.niche-header').forEach(header => {
+        header.addEventListener('click', function() {
+          const content = this.nextElementSibling;
+          const icon = this.querySelector('i');
+          const isOpen = content.classList.contains('open');
+          document.querySelectorAll('.niche-content').forEach(c => c.classList.remove('open'));
+          document.querySelectorAll('.niche-header i').forEach(i => i.style.transform = 'rotate(0deg)');
+          if (!isOpen) {
+            content.classList.add('open');
+            icon.style.transform = 'rotate(180deg)';
+          }
+        });
+      });
     }
 
-    // 🔧 ATIVAÇÃO DA POLÍTICA DE PRIVACIDADE – SEMPRE FUNCIONA, INDEPENDENTE DA API
+    // Ativação da política de privacidade (sempre funcional)
     (function() {
       const privacyToggle = document.getElementById('privacyToggle');
       const privacyPanel = document.getElementById('privacyPanel');
