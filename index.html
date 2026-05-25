@@ -28,6 +28,45 @@
     a { color: inherit; text-decoration: none; }
     .container { max-width: 1300px; margin:0 auto; padding:0 20px; }
 
+    /* Loader – Tela de abertura luxo */
+    #pageLoader {
+      position: fixed;
+      inset: 0;
+      background: var(--primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+      opacity: 1;
+      visibility: visible;
+    }
+    #pageLoader.hidden-loader {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loader-logo {
+      font-family: var(--font-heading);
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: #fff;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(184,134,11,0.5);
+    }
+    .loader-logo span { color: var(--accent); }
+    .loader-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: loaderSpin 0.8s linear infinite;
+    }
+    @keyframes loaderSpin { to { transform: rotate(360deg); } }
+
     /* Header */
     .main-header {
       background: var(--primary);
@@ -461,10 +500,19 @@
       .niche-accordion {
         grid-template-columns: 1fr;
       }
+      .loader-logo { font-size: 2.2rem; }
     }
   </style>
 </head>
 <body>
+
+  <!-- ========== TELA DE ABERTURA (LOADER) ========== -->
+  <div id="pageLoader">
+    <div class="loader-logo">Pauta<span>Zero</span></div>
+    <div class="loader-spinner"></div>
+  </div>
+  <!-- ============================================== -->
+
   <header class="main-header">
     <div class="header-inner">
       <a href="/" class="logo">Pauta<span>Zero</span></a>
@@ -577,6 +625,8 @@
     }
 
     async function loadPage() {
+      const loadStart = Date.now(); // Marca o início do carregamento
+
       try {
         const response = await fetch('/api/portais');
         if (!response.ok) throw new Error('Falha ao carregar artigos');
@@ -776,6 +826,20 @@
         console.error('Erro ao carregar a página:', err);
         document.getElementById('articlesGrid').innerHTML = '<p>Erro ao carregar conteúdo. Tente novamente.</p>';
         document.getElementById('tickerTrack').innerHTML = 'Erro ao carregar notícias.';
+      } finally {
+        // 🔥 Garante que o loader fique visível por no mínimo 3 segundos
+        const elapsed = Date.now() - loadStart;
+        const MIN_LOADER_TIME = 3000; // 3 segundos (ajuste aqui se quiser mais)
+        const remaining = Math.max(0, MIN_LOADER_TIME - elapsed);
+        setTimeout(() => {
+          const loader = document.getElementById('pageLoader');
+          if (loader) {
+            loader.classList.add('hidden-loader');
+            setTimeout(() => {
+              if (loader.parentNode) loader.remove();
+            }, 600); // tempo da transição de saída
+          }
+        }, remaining);
       }
     }
 
