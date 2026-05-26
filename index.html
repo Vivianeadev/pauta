@@ -160,6 +160,11 @@
     async function loadPage() {
       const loadStart = Date.now();
       try {
+        // ============================================================
+        // 🔹 ORIGEM DOS DADOS: A API /api/portais retorna os artigos
+        //    armazenados no KV (ARTICLE_KV). O frontend exibe todos,
+        //    com a seção Medicina filtrando por eixo 'medicina'.
+        // ============================================================
         const response = await fetch('/api/portais');
         if (!response.ok) throw new Error('Falha ao carregar artigos');
         const all = await response.json();
